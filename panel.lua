@@ -4,20 +4,25 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local function setupAdminPanel(character)
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    local humanoid = character:WaitForChild("Humanoid")
+local function setupAdminPanel()
+    -- Esperar a que el personaje y sus partes clave existan
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10)
+    local humanoid = character:WaitForChild("Humanoid", 10)
     local camera = Workspace.CurrentCamera
 
-    if player.PlayerGui:FindFirstChild("MobileAdminGui") then
-        player.PlayerGui.MobileAdminGui:Destroy()
+    if not humanoidRootPart or not humanoid then return end
+
+    if playerGui:FindFirstChild("MobileAdminGui") then
+        playerGui.MobileAdminGui:Destroy()
     end
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "MobileAdminGui"
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+    ScreenGui.Parent = playerGui
 
     -- Marco Principal del Panel
     local MainFrame = Instance.new("Frame")
@@ -577,4 +582,79 @@ local function setupAdminPanel(character)
     DownBtn.MouseButton1Up:Connect(function() downState = false end)
 
     local function getClosestEnemy()
-        local closestTarget =
+        local closestTarget = nil
+        local shortestDistance = math.huge
+
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("Humanoid") and otherPlayer.Character.Humanoid.Health > 0 then
+                local targetPart = otherPlayer.Character:FindFirstChild("Head")
+                if targetPart then
+                    local screenPoint, onScreen = camera:WorldToViewportPoint(targetPart.Position)
+                    if onScreen then
+                        local mousePos = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+                        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
+                        if distance < shortestDistance then
+                            shortestDistance = distance
+                            closestTarget = targetPart
+                        end
+                    end
+                end
+            end
+        end
+        return closestTarget
+    end
+
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if not character or not character.Parent or not humanoidRootPart or not humanoidRootPart.Parent or humanoid.Health <= 0 then
+            if ScreenGui then ScreenGui:Destroy() end
+            if connection then connection:Disconnect() end
+            return
+        end
+
+        if flying then
+            humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+            local moveDir = humanoid.MoveDirection
+            local verticalVel = 0
+            if upState then verticalVel = speed end
+            if downState then verticalVel = -speed end
+
+            local horizontalVel = moveDir * speed
+            humanoidRootPart.AssemblyLinearVelocity = Vector3.new(horizontalVel.X, verticalVel, horizontalVel.Z)
+            
+            if moveDir.Magnitude > 0 then
+                local lookVec = camera.CFrame.LookVector
+                local flatLook = Vector3.new(lookVec.X, 0, lookVec.Z)
+                if flatLook.Magnitude > 0 then
+                    humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, humanoidRootPart.Position + flatLook.Unit)
+                end
+            end
+        end
+
+        if noclip then
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+
+        if stronglock then
+            local target = getClosestEnemy()
+            if target then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
+            end
+        end
+
+        if godModeActive then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    setupAdminPanel()
+end)
+
+setupAdminPanel()

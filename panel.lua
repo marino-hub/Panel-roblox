@@ -278,4 +278,303 @@ local function setupAdminPanel(character)
     PlayersScroll.Size = UDim2.new(0, 170, 0, 195)
     PlayersScroll.Position = UDim2.new(0, 5, 0, 35)
     PlayersScroll.BackgroundTransparency = 1
-    PlayersScroll.
+    PlayersScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    PlayersScroll.ScrollBarThickness = 4
+    PlayersScroll.Parent = ListFrame
+
+    local PlayersLayout = Instance.new("UIListLayout")
+    PlayersLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PlayersLayout.Padding = UDim.new(0, 4)
+    PlayersLayout.Parent = PlayersScroll
+
+    local function refreshPlayerList()
+        for _, child in ipairs(PlayersScroll:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+
+        local count = 0
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= player then
+                count = count + 1
+                local pBtn = Instance.new("TextButton")
+                pBtn.Size = UDim2.new(0, 160, 0, 28)
+                pBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                pBtn.Text = p.Name
+                pBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                pBtn.TextSize = 11
+                pBtn.Font = Enum.Font.Gotham
+                pBtn.LayoutOrder = count
+                pBtn.Parent = PlayersScroll
+                Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
+
+                pBtn.MouseButton1Click:Connect(function()
+                    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        humanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    end
+                end)
+            end
+        end
+        PlayersScroll.CanvasSize = UDim2.new(0, 0, 0, count * 32)
+    end
+
+    PlayerListBtn.MouseButton1Click:Connect(function()
+        refreshPlayerList()
+        ListFrame.Visible = not ListFrame.Visible
+    end)
+
+    CloseListBtn.MouseButton1Click:Connect(function()
+        ListFrame.Visible = false
+    end)
+
+    -- Minimizar / Maximizar
+    MinBtn.MouseButton1Click:Connect(function()
+        MainFrame.Visible = false
+        ListFrame.Visible = false
+        MiniFrame.Position = MainFrame.Position
+        MiniFrame.Visible = true
+    end)
+
+    MiniFrame.MouseButton1Click:Connect(function()
+        MiniFrame.Visible = false
+        MainFrame.Visible = true
+    end)
+
+    -- Lógica Roba un Huevo
+    local eggEspActive = false
+    local eggHighlights = {}
+    local eggSpeedActive = false
+    local autoSafeZoneActive = false
+    local initialSpawnPosition = humanoidRootPart.CFrame
+
+    EggEspBtn.MouseButton1Click:Connect(function()
+        eggEspActive = not eggEspActive
+        EggEspBtn.Text = eggEspActive and "ESP HUEVOS: ON" or "ESP HUEVOS: OFF"
+        EggEspBtn.BackgroundColor3 = eggEspActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+
+        if eggEspActive then
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                    if obj:IsA("BasePart") or obj:IsA("Model") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "EggESP"
+                        hl.Adornee = obj
+                        hl.FillColor = Color3.fromRGB(255, 215, 0)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        hl.Parent = obj
+                        table.insert(eggHighlights, hl)
+                    end
+                end
+            end
+        else
+            for _, hl in ipairs(eggHighlights) do
+                if hl then hl:Destroy() end
+            end
+            eggHighlights = {}
+        end
+    end)
+
+    EggSpeedBtn.MouseButton1Click:Connect(function()
+        eggSpeedActive = not eggSpeedActive
+        EggSpeedBtn.Text = eggSpeedActive and "VELOCIDAD: 100" or "VELOCIDAD: 16"
+        EggSpeedBtn.BackgroundColor3 = eggSpeedActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        humanoid.WalkSpeed = eggSpeedActive and 100 or 16
+    end)
+
+    AutoSafeZoneBtn.MouseButton1Click:Connect(function()
+        autoSafeZoneActive = not autoSafeZoneActive
+        AutoSafeZoneBtn.Text = autoSafeZoneActive and "AUTO-TP ZONA: ON" or "AUTO-TP ZONA: OFF"
+        AutoSafeZoneBtn.BackgroundColor3 = autoSafeZoneActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+    end)
+
+    TpHomeBtn.MouseButton1Click:Connect(function()
+        if humanoidRootPart then
+            humanoidRootPart.CFrame = initialSpawnPosition
+        end
+    end)
+
+    TpHuevosBtn.MouseButton1Click:Connect(function()
+        local closestEgg = nil
+        local minDist = math.huge
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                local part = obj:IsA("Model") and obj.PrimaryPart or (obj:IsA("BasePart") and obj or nil)
+                if part and humanoidRootPart then
+                    local dist = (humanoidRootPart.Position - part.Position).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        closestEgg = part
+                    end
+                end
+            end
+        end
+        if closestEgg and humanoidRootPart then
+            humanoidRootPart.CFrame = closestEgg.CFrame + Vector3.new(0, 3, 0)
+        end
+    end)
+
+    -- Detección automática de huevos
+    task.spawn(function()
+        while character and character.Parent do
+            task.wait(0.5)
+            if autoSafeZoneActive and humanoidRootPart then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                        local part = obj:IsA("Model") and obj.PrimaryPart or (obj:IsA("BasePart") and obj or nil)
+                        if part then
+                            local dist = (humanoidRootPart.Position - part.Position).Magnitude
+                            if dist < 4 then
+                                humanoidRootPart.CFrame = initialSpawnPosition
+                                task.wait(1)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Lógica MM2
+    local mm2EspActive = false
+    local mm2Highlights = {}
+
+    Mm2EspBtn.MouseButton1Click:Connect(function()
+        mm2EspActive = not mm2EspActive
+        Mm2EspBtn.Text = mm2EspActive and "ESP ROLES: ON" or "ESP ROLES: OFF"
+        Mm2EspBtn.BackgroundColor3 = mm2EspActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+
+        if mm2EspActive then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local color = Color3.fromRGB(0, 255, 0)
+                    if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+                        color = Color3.fromRGB(255, 0, 0)
+                    elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
+                        color = Color3.fromRGB(0, 120, 255)
+                    end
+
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "MM2ESP"
+                    hl.Adornee = p.Character
+                    hl.FillColor = color
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = p.Character
+                    table.insert(mm2Highlights, hl)
+                end
+            end
+        else
+            for _, hl in ipairs(mm2Highlights) do
+                if hl then hl:Destroy() end
+            end
+            mm2Highlights = {}
+        end
+    end)
+
+    TpGunBtn.MouseButton1Click:Connect(function()
+        local gunDrop = Workspace:FindFirstChild("GunDrop", true)
+        if gunDrop and humanoidRootPart then
+            humanoidRootPart.CFrame = gunDrop.CFrame + Vector3.new(0, 2, 0)
+        end
+    end)
+
+    -- Estados General
+    local flying = false
+    local noclip = false
+    local stronglock = false
+    local espActive = false
+    local highSpeed = false
+    local wideFov = false
+    local infJumpActive = false
+    local godModeActive = false
+    
+    local speed = 35
+    local upState = false
+    local downState = false
+    local espHighlights = {}
+
+    FlyBtn.MouseButton1Click:Connect(function()
+        flying = not flying
+        FlyBtn.Text = flying and "VUELO: ON" or "VUELO: OFF"
+        FlyBtn.BackgroundColor3 = flying and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        if not flying and humanoidRootPart and humanoid then
+            humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            humanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end)
+
+    NoclipBtn.MouseButton1Click:Connect(function()
+        noclip = not noclip
+        NoclipBtn.Text = noclip and "NOCLIP: ON" or "NOCLIP: OFF"
+        NoclipBtn.BackgroundColor3 = noclip and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+    end)
+
+    LockBtn.MouseButton1Click:Connect(function()
+        stronglock = not stronglock
+        LockBtn.Text = stronglock and "STRONGLOCK: ON" or "STRONGLOCK: OFF"
+        LockBtn.BackgroundColor3 = stronglock and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+    end)
+
+    EspBtn.MouseButton1Click:Connect(function()
+        espActive = not espActive
+        EspBtn.Text = espActive and "ESP: ON" or "ESP: OFF"
+        EspBtn.BackgroundColor3 = espActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+
+        if espActive then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "AdminESP"
+                    hl.Adornee = p.Character
+                    hl.FillColor = Color3.fromRGB(255, 0, 0)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = p.Character
+                    table.insert(espHighlights, hl)
+                end
+            end
+        else
+            for _, hl in ipairs(espHighlights) do
+                if hl then hl:Destroy() end
+            end
+            espHighlights = {}
+        end
+    end)
+
+    SpeedBtn.MouseButton1Click:Connect(function()
+        highSpeed = not highSpeed
+        SpeedBtn.Text = highSpeed and "VELOCIDAD: 80" or "VELOCIDAD: 16"
+        SpeedBtn.BackgroundColor3 = highSpeed and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        humanoid.WalkSpeed = highSpeed and 80 or 16
+    end)
+
+    FovBtn.MouseButton1Click:Connect(function()
+        wideFov = not wideFov
+        FovBtn.Text = wideFov and "FOV: 110" or "FOV: 70"
+        FovBtn.BackgroundColor3 = wideFov and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        camera.FieldOfView = wideFov and 110 or 70
+    end)
+
+    JumpBtn.MouseButton1Click:Connect(function()
+        infJumpActive = not infJumpActive
+        JumpBtn.Text = infJumpActive and "SALTO INF: ON" or "SALTO INF: OFF"
+        JumpBtn.BackgroundColor3 = infJumpActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+    end)
+
+    UserInputService.JumpRequest:Connect(function()
+        if infJumpActive and humanoidRootPart then
+            humanoidRootPart.AssemblyLinearVelocity = Vector3.new(humanoidRootPart.AssemblyLinearVelocity.X, 50, humanoidRootPart.AssemblyLinearVelocity.Z)
+        end
+    end)
+
+    GodBtn.MouseButton1Click:Connect(function()
+        godModeActive = not godModeActive
+        GodBtn.Text = godModeActive and "GOD MODE: ON" or "GOD MODE: OFF"
+        GodBtn.BackgroundColor3 = godModeActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+    end)
+
+    UpBtn.MouseButton1Down:Connect(function() upState = true end)
+    UpBtn.MouseButton1Up:Connect(function() upState = false end)
+    DownBtn.MouseButton1Down:Connect(function() downState = true end)
+    DownBtn.MouseButton1Up:Connect(function() downState = false end)
+
+    local function getClosestEnemy()
+        local closestTarget =

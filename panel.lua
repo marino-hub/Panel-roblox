@@ -21,7 +21,7 @@ local function setupAdminPanel(character)
 
     -- Marco Principal del Panel
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 210, 0, 320)
+    MainFrame.Size = UDim2.new(0, 220, 0, 330)
     MainFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BorderSizePixel = 0
@@ -33,34 +33,29 @@ local function setupAdminPanel(character)
     UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = MainFrame
 
+    -- Título
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0, 170, 0, 30)
+    Title.Size = UDim2.new(0, 180, 0, 30)
     Title.Position = UDim2.new(0, 0, 0, 0)
     Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Title.Text = "PANEL RIVALS MÓVIL"
+    Title.Text = "PANEL MULTI-JUEGO"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 13
     Title.Font = Enum.Font.GothamBold
     Title.Parent = MainFrame
-
-    local TitleCorner = Instance.new("UICorner")
-    TitleCorner.CornerRadius = UDim.new(0, 12)
-    TitleCorner.Parent = Title
+    Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
 
     -- Botón de Minimizar (-)
     local MinBtn = Instance.new("TextButton")
     MinBtn.Size = UDim2.new(0, 35, 0, 30)
-    MinBtn.Position = UDim2.new(0, 172, 0, 0)
+    MinBtn.Position = UDim2.new(0, 182, 0, 0)
     MinBtn.BackgroundColor3 = Color3.fromRGB(180, 120, 40)
     MinBtn.Text = "-"
     MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     MinBtn.TextSize = 18
     MinBtn.Font = Enum.Font.GothamBold
     MinBtn.Parent = MainFrame
-
-    local MinCorner = Instance.new("UICorner")
-    MinCorner.CornerRadius = UDim.new(0, 8)
-    MinCorner.Parent = MinBtn
+    Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 8)
 
     -- Mini Ventana flotante (Maximizar)
     local MiniFrame = Instance.new("TextButton")
@@ -75,80 +70,132 @@ local function setupAdminPanel(character)
     MiniFrame.Active = true
     MiniFrame.Draggable = true
     MiniFrame.Parent = ScreenGui
+    Instance.new("UICorner", MiniFrame).CornerRadius = UDim.new(0, 8)
 
-    local MiniCorner = Instance.new("UICorner")
-    MiniCorner.CornerRadius = UDim.new(0, 8)
-    MiniCorner.Parent = MiniFrame
+    -- Barra Superior de Pestañas
+    local TabBar = Instance.new("Frame")
+    TabBar.Size = UDim2.new(0, 210, 0, 28)
+    TabBar.Position = UDim2.new(0, 5, 0, 34)
+    TabBar.BackgroundTransparency = 1
+    TabBar.Parent = MainFrame
 
-    -- ScrollingFrame para deslizar arriba y abajo
-    local ScrollingFrame = Instance.new("ScrollingFrame")
-    ScrollingFrame.Size = UDim2.new(0, 195, 0, 225)
-    ScrollingFrame.Position = UDim2.new(0, 5, 0, 35)
-    ScrollingFrame.BackgroundTransparency = 1
-    ScrollingFrame.BorderSizePixel = 0
-    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 380) -- Altura expandida para que quepan todos los botones con scroll
-    ScrollingFrame.ScrollBarThickness = 6
-    ScrollingFrame.Parent = MainFrame
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.FillDirection = Enum.FillDirection.Horizontal
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 4)
+    TabListLayout.Parent = TabBar
 
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Padding = UDim.new(0, 6)
-    UIListLayout.Parent = ScrollingFrame
-
-    local function createButton(name, order)
+    local function createTabButton(text, order)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 178, 0, 32)
-        btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        btn.Text = name .. ": OFF"
+        btn.Size = UDim2.new(0, 66, 0, 26)
+        btn.BackgroundColor3 = order == 1 and Color3.fromRGB(60, 120, 200) or Color3.fromRGB(45, 45, 45)
+        btn.Text = text
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 12
+        btn.TextSize = 10
         btn.Font = Enum.Font.GothamBold
         btn.LayoutOrder = order
-        btn.Parent = ScrollingFrame
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = btn
+        btn.Parent = TabBar
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
         return btn
     end
 
-    -- Botones del panel organizados
-    local FlyBtn = createButton("VUELO", 1)
-    local NoclipBtn = createButton("NOCLIP", 2)
-    local LockBtn = createButton("STRONGLOCK", 3)
-    local EspBtn = createButton("ESP", 4)
-    local SpeedBtn = createButton("VELOCIDAD (80)", 5)
-    local FovBtn = createButton("FOV AMPLIADO", 6)
-    local JumpBtn = createButton("SALTO INFINITO", 7)
-    local GodBtn = createButton("GOD MODE", 8)
+    local TabGeneral = createTabButton("GENERAL", 1)
+    local TabBrookhaven = createTabButton("BROOKHAVEN", 2)
+    local TabMM2 = createTabButton("MM2", 3)
 
-    -- Botones de Accion Directa (TP a Base y Lista de Jugadores)
-    local TpBtn = Instance.new("TextButton")
-    TpBtn.Size = UDim2.new(0, 178, 0, 32)
-    TpBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 180)
-    TpBtn.Text = "TP A BASE"
-    TpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TpBtn.TextSize = 12
-    TpBtn.Font = Enum.Font.GothamBold
-    TpBtn.LayoutOrder = 9
-    TpBtn.Parent = ScrollingFrame
-    Instance.new("UICorner", TpBtn).CornerRadius = UDim.new(0, 8)
+    -- Contenedores con Scroll para las Pestañas
+    local function createScrollFrame()
+        local sf = Instance.new("ScrollingFrame")
+        sf.Size = UDim2.new(0, 210, 0, 225)
+        sf.Position = UDim2.new(0, 5, 0, 65)
+        sf.BackgroundTransparency = 1
+        sf.BorderSizePixel = 0
+        sf.CanvasSize = UDim2.new(0, 0, 0, 380)
+        sf.ScrollBarThickness = 5
+        sf.Visible = false
+        sf.Parent = MainFrame
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 6)
+        layout.Parent = sf
+        return sf
+    end
+
+    local ScrollGeneral = createScrollFrame()
+    local ScrollBrookhaven = createScrollFrame()
+    local ScrollMM2 = createScrollFrame()
+
+    ScrollGeneral.Visible = true
+
+    local function selectTab(activeScroll, activeBtn)
+        ScrollGeneral.Visible = (activeScroll == ScrollGeneral)
+        ScrollBrookhaven.Visible = (activeScroll == ScrollBrookhaven)
+        ScrollMM2.Visible = (activeScroll == ScrollMM2)
+
+        TabGeneral.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        TabBrookhaven.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        TabMM2.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+        activeBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+    end
+
+    TabGeneral.MouseButton1Click:Connect(function() selectTab(ScrollGeneral, TabGeneral) end)
+    TabBrookhaven.MouseButton1Click:Connect(function() selectTab(ScrollBrookhaven, TabBrookhaven) end)
+    TabMM2.MouseButton1Click:Connect(function() selectTab(ScrollMM2, TabMM2) end)
+
+    local function createButton(parent, name, order)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 195, 0, 32)
+        btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+        btn.Text = name .. ": OFF"
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.TextSize = 11
+        btn.Font = Enum.Font.GothamBold
+        btn.LayoutOrder = order
+        btn.Parent = parent
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+        return btn
+    end
+
+    -- ==================== BOTONES GENERAL ====================
+    local FlyBtn = createButton(ScrollGeneral, "VUELO", 1)
+    local NoclipBtn = createButton(ScrollGeneral, "NOCLIP", 2)
+    local LockBtn = createButton(ScrollGeneral, "STRONGLOCK", 3)
+    local EspBtn = createButton(ScrollGeneral, "ESP", 4)
+    local SpeedBtn = createButton(ScrollGeneral, "VELOCIDAD (80)", 5)
+    local FovBtn = createButton(ScrollGeneral, "FOV AMPLIADO", 6)
+    local JumpBtn = createButton(ScrollGeneral, "SALTO INFINITO", 7)
+    local GodBtn = createButton(ScrollGeneral, "GOD MODE", 8)
 
     local PlayerListBtn = Instance.new("TextButton")
-    PlayerListBtn.Size = UDim2.new(0, 178, 0, 32)
+    PlayerListBtn.Size = UDim2.new(0, 195, 0, 32)
     PlayerListBtn.BackgroundColor3 = Color3.fromRGB(120, 40, 180)
     PlayerListBtn.Text = "LISTA JUGADORES (TP)"
     PlayerListBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     PlayerListBtn.TextSize = 11
     PlayerListBtn.Font = Enum.Font.GothamBold
-    PlayerListBtn.LayoutOrder = 10
-    PlayerListBtn.Parent = ScrollingFrame
+    PlayerListBtn.LayoutOrder = 9
+    PlayerListBtn.Parent = ScrollGeneral
     Instance.new("UICorner", PlayerListBtn).CornerRadius = UDim.new(0, 8)
 
-    -- Botones Fijos Abajo (Subir y Bajar para el vuelo)
+    -- ==================== BOTONES MM2 ====================
+    local Mm2EspBtn = createButton(ScrollMM2, "ESP ROLES (MM2)", 1)
+    
+    local TpGunBtn = Instance.new("TextButton")
+    TpGunBtn.Size = UDim2.new(0, 195, 0, 32)
+    TpGunBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 180)
+    TpGunBtn.Text = "AGARRAR PISTOLA TP"
+    TpGunBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TpGunBtn.TextSize = 11
+    TpGunBtn.Font = Enum.Font.GothamBold
+    TpGunBtn.LayoutOrder = 2
+    TpGunBtn.Parent = ScrollMM2
+    Instance.new("UICorner", TpGunBtn).CornerRadius = UDim.new(0, 8)
+
+    -- Botones Fijos Abajo (Subir y Bajar para Vuelo)
     local UpBtn = Instance.new("TextButton")
-    UpBtn.Size = UDim2.new(0, 92, 0, 28)
-    UpBtn.Position = UDim2.new(0, 5, 0, 268)
+    UpBtn.Size = UDim2.new(0, 98, 0, 28)
+    UpBtn.Position = UDim2.new(0, 5, 0, 296)
     UpBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
     UpBtn.Text = "SUBIR"
     UpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -158,8 +205,8 @@ local function setupAdminPanel(character)
     Instance.new("UICorner", UpBtn).CornerRadius = UDim.new(0, 6)
 
     local DownBtn = Instance.new("TextButton")
-    DownBtn.Size = UDim2.new(0, 92, 0, 28)
-    DownBtn.Position = UDim2.new(0, 103, 0, 268)
+    DownBtn.Size = UDim2.new(0, 98, 0, 28)
+    DownBtn.Position = UDim2.new(0, 107, 0, 296)
     DownBtn.BackgroundColor3 = Color3.fromRGB(160, 80, 40)
     DownBtn.Text = "BAJAR"
     DownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -168,10 +215,10 @@ local function setupAdminPanel(character)
     DownBtn.Parent = MainFrame
     Instance.new("UICorner", DownBtn).CornerRadius = UDim.new(0, 6)
 
-    -- Ventana Desplegable para la Lista de Jugadores Interactiva
+    -- Ventana Lista de Jugadores
     local ListFrame = Instance.new("Frame")
     ListFrame.Size = UDim2.new(0, 180, 0, 240)
-    ListFrame.Position = UDim2.new(0.28, 0, 0.25, 0)
+    ListFrame.Position = UDim2.new(0.3, 0, 0.25, 0)
     ListFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     ListFrame.Visible = false
     ListFrame.Active = true
@@ -252,7 +299,7 @@ local function setupAdminPanel(character)
         ListFrame.Visible = false
     end)
 
-    -- Lógica Minimizar / Maximizar
+    -- Minimizar / Maximizar
     MinBtn.MouseButton1Click:Connect(function()
         MainFrame.Visible = false
         ListFrame.Visible = false
@@ -265,7 +312,51 @@ local function setupAdminPanel(character)
         MainFrame.Visible = true
     end)
 
-    -- Estados de las funciones
+    -- Lógica MM2 ESP de Roles
+    local mm2EspActive = false
+    local mm2Highlights = {}
+
+    Mm2EspBtn.MouseButton1Click:Connect(function()
+        mm2EspActive = not mm2EspActive
+        Mm2EspBtn.Text = mm2EspActive and "ESP ROLES: ON" or "ESP ROLES: OFF"
+        Mm2EspBtn.BackgroundColor3 = mm2EspActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+
+        if mm2EspActive then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local color = Color3.fromRGB(0, 255, 0) -- Inocente por defecto (Verde)
+                    if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+                        color = Color3.fromRGB(255, 0, 0) -- Asesino (Rojo)
+                    elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
+                        color = Color3.fromRGB(0, 120, 255) -- Sheriff (Azul)
+                    end
+
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "MM2ESP"
+                    hl.Adornee = p.Character
+                    hl.FillColor = color
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = p.Character
+                    table.insert(mm2Highlights, hl)
+                end
+            end
+        else
+            for _, hl in ipairs(mm2Highlights) do
+                if hl then hl:Destroy() end
+            end
+            mm2Highlights = {}
+        end
+    end)
+
+    -- Lógica TP a la Pistola
+    TpGunBtn.MouseButton1Click:Connect(function()
+        local gunDrop = Workspace:FindFirstChild("GunDrop", true)
+        if gunDrop and humanoidRootPart then
+            humanoidRootPart.CFrame = gunDrop.CFrame + Vector3.new(0, 2, 0)
+        end
+    end)
+
+    -- Estados General
     local flying = false
     local noclip = false
     local stronglock = false
@@ -280,7 +371,6 @@ local function setupAdminPanel(character)
     local downState = false
     local espHighlights = {}
 
-    -- Conexiones de Botones Principales
     FlyBtn.MouseButton1Click:Connect(function()
         flying = not flying
         FlyBtn.Text = flying and "VUELO: ON" or "VUELO: OFF"
@@ -349,7 +439,6 @@ local function setupAdminPanel(character)
         JumpBtn.BackgroundColor3 = infJumpActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
     end)
 
-    -- Soporte para mantener presionado el botón de salto del dispositivo
     UserInputService.JumpRequest:Connect(function()
         if infJumpActive and humanoidRootPart then
             humanoidRootPart.AssemblyLinearVelocity = Vector3.new(humanoidRootPart.AssemblyLinearVelocity.X, 50, humanoidRootPart.AssemblyLinearVelocity.Z)
@@ -360,10 +449,6 @@ local function setupAdminPanel(character)
         godModeActive = not godModeActive
         GodBtn.Text = godModeActive and "GOD MODE: ON" or "GOD MODE: OFF"
         GodBtn.BackgroundColor3 = godModeActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
-    end)
-
-    TpBtn.MouseButton1Click:Connect(function()
-        humanoidRootPart.CFrame = CFrame.new(0, 50, 0)
     end)
 
     UpBtn.MouseButton1Down:Connect(function() upState = true end)

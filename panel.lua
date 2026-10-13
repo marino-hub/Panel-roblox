@@ -16,7 +16,7 @@ ScreenGui.Name = "MobileAdminGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = playerGui
 
--- Botón Flotante de Apertura (El que solucionó la carga)
+-- Botón Flotante de Apertura
 local OpenBtn = Instance.new("TextButton")
 OpenBtn.Size = UDim2.new(0, 90, 0, 40)
 OpenBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
@@ -191,7 +191,7 @@ DownBtn.Position = UDim2.new(0, 107, 0, 296)
 DownBtn.BackgroundColor3 = Color3.fromRGB(160, 80, 40)
 DownBtn.Text = "BAJAR"
 DownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-DownBtn.TextSize = 11
+DownBtn.TextSize= 11
 DownBtn.Font = Enum.Font.GothamBold
 DownBtn.Parent = MainFrame
 Instance.new("UICorner", DownBtn).CornerRadius = UDim.new(0, 6)
@@ -305,6 +305,25 @@ local upState = false
 local downState = false
 local speed = 35
 local initialSpawnPosition = nil
+
+-- Función segura de Teletransporte Anti-Rebote (Evita que el juego te devuelva)
+local function safeTeleport(targetCFrame)
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChildOfClass("Humanoid") then
+        local hrp = char.HumanoidRootPart
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        
+        -- Detener velocidad actual para evitar tirones de física
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        
+        -- Forzar posición durante varios fotogramas consecutivos para anular el anti-cheat o rebote del juego
+        for i = 1, 5 do
+            hrp.CFrame = targetCFrame
+            task.wait()
+        end
+    end
+end
 
 -- Guardar la posición inicial al spawnear
 task.spawn(function()
@@ -453,9 +472,8 @@ AutoSafeBtn.MouseButton1Click:Connect(function()
 end)
 
 TpHomeBtn.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") and initialSpawnPosition then
-        char.HumanoidRootPart.CFrame = initialSpawnPosition
+    if initialSpawnPosition then
+        safeTeleport(initialSpawnPosition)
     end
 end)
 
@@ -479,14 +497,14 @@ TpHuevosBtn.MouseButton1Click:Connect(function()
         end
     end
     if closestEgg then
-        hrp.CFrame = closestEgg.CFrame + Vector3.new(0, 3, 0)
+        safeTeleport(closestEgg.CFrame + Vector3.new(0, 3, 0))
     end
 end)
 
--- Detector automático al tocar/agarrar huevos
+-- Detector automático al tocar/agarrar huevos (Anti-rebote mejorado)
 task.spawn(function()
     while true do
-        task.wait(0.5)
+        task.wait(0.3)
         local char = player.Character
         if autoSafeZoneActive and char and char:FindFirstChild("HumanoidRootPart") and initialSpawnPosition then
             local hrp = char.HumanoidRootPart
@@ -496,8 +514,8 @@ task.spawn(function()
                     if part then
                         local dist = (hrp.Position - part.Position).Magnitude
                         if dist < 4 then
-                            hrp.CFrame = initialSpawnPosition
-                            task.wait(1)
+                            safeTeleport(initialSpawnPosition)
+                            task.wait(2) -- Pausa más larga para asegurar que el juego procese el punto de entrega del huevo
                         end
                     end
                 end
@@ -543,7 +561,7 @@ TpGunBtn.MouseButton1Click:Connect(function()
     local char = player.Character
     local gunDrop = Workspace:FindFirstChild("GunDrop", true)
     if gunDrop and char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = gunDrop.CFrame + Vector3.new(0, 2, 0)
+        safeTeleport(gunDrop.CFrame + Vector3.new(0, 2, 0))
     end
 end)
 

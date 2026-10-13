@@ -91,7 +91,7 @@ local function setupAdminPanel(character)
         btn.BackgroundColor3 = order == 1 and Color3.fromRGB(60, 120, 200) or Color3.fromRGB(45, 45, 45)
         btn.Text = text
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 10
+        btn.TextSize = 9
         btn.Font = Enum.Font.GothamBold
         btn.LayoutOrder = order
         btn.Parent = TabBar
@@ -100,7 +100,7 @@ local function setupAdminPanel(character)
     end
 
     local TabGeneral = createTabButton("GENERAL", 1)
-    local TabBrookhaven = createTabButton("BROOKHAVEN", 2)
+    local TabHuevo = createTabButton("ROBA UN HUEVO", 2)
     local TabMM2 = createTabButton("MM2", 3)
 
     -- Contenedores con Scroll para las Pestañas
@@ -122,25 +122,25 @@ local function setupAdminPanel(character)
     end
 
     local ScrollGeneral = createScrollFrame()
-    local ScrollBrookhaven = createScrollFrame()
+    local ScrollHuevo = createScrollFrame()
     local ScrollMM2 = createScrollFrame()
 
     ScrollGeneral.Visible = true
 
     local function selectTab(activeScroll, activeBtn)
         ScrollGeneral.Visible = (activeScroll == ScrollGeneral)
-        ScrollBrookhaven.Visible = (activeScroll == ScrollBrookhaven)
+        ScrollHuevo.Visible = (activeScroll == ScrollHuevo)
         ScrollMM2.Visible = (activeScroll == ScrollMM2)
 
         TabGeneral.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        TabBrookhaven.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        TabHuevo.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
         TabMM2.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 
         activeBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
     end
 
     TabGeneral.MouseButton1Click:Connect(function() selectTab(ScrollGeneral, TabGeneral) end)
-    TabBrookhaven.MouseButton1Click:Connect(function() selectTab(ScrollBrookhaven, TabBrookhaven) end)
+    TabHuevo.MouseButton1Click:Connect(function() selectTab(ScrollHuevo, TabHuevo) end)
     TabMM2.MouseButton1Click:Connect(function() selectTab(ScrollMM2, TabMM2) end)
 
     local function createButton(parent, name, order)
@@ -177,6 +177,22 @@ local function setupAdminPanel(character)
     PlayerListBtn.LayoutOrder = 9
     PlayerListBtn.Parent = ScrollGeneral
     Instance.new("UICorner", PlayerListBtn).CornerRadius = UDim.new(0, 8)
+
+    -- ==================== BOTONES ROBA UN HUEVO ====================
+    local EggEspBtn = createButton(ScrollHuevo, "ESP HUEVOS", 1)
+    local EggSpeedBtn = createButton(ScrollHuevo, "SUPER VELOCIDAD (100)", 2)
+    local AutoSafeZoneBtn = createButton(ScrollHuevo, "AUTO-TP ZONA SEGURA", 3)
+
+    local TpHuevosBtn = Instance.new("TextButton")
+    TpHuevosBtn.Size = UDim2.new(0, 195, 0, 32)
+    TpHuevosBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 180)
+    TpHuevosBtn.Text = "TP AL HUEVO CERCANO"
+    TpHuevosBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TpHuevosBtn.TextSize = 11
+    TpHuevosBtn.Font = Enum.Font.GothamBold
+    TpHuevosBtn.LayoutOrder = 4
+    TpHuevosBtn.Parent = ScrollHuevo
+    Instance.new("UICorner", TpHuevosBtn).CornerRadius = UDim.new(0, 8)
 
     -- ==================== BOTONES MM2 ====================
     local Mm2EspBtn = createButton(ScrollMM2, "ESP ROLES (MM2)", 1)
@@ -312,7 +328,101 @@ local function setupAdminPanel(character)
         MainFrame.Visible = true
     end)
 
-    -- Lógica MM2 ESP de Roles
+    -- Lógica Roba un Huevo (ESP, Super Velocidad y Auto-TP a Base al Agarrar Huevo)
+    local eggEspActive = false
+    local eggHighlights = {}
+    local eggSpeedActive = false
+    local autoSafeZoneActive = false
+    local safeZonePosition = humanoidRootPart.CFrame -- Guarda la posición inicial como zona segura
+
+    EggEspBtn.MouseButton1Click:Connect(function()
+        eggEspActive = not eggEspActive
+        EggEspBtn.Text = eggEspActive and "ESP HUEVOS: ON" or "ESP HUEVOS: OFF"
+        EggEspBtn.BackgroundColor3 = eggEspActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+
+        if eggEspActive then
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                    if obj:IsA("BasePart") or obj:IsA("Model") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "EggESP"
+                        hl.Adornee = obj
+                        hl.FillColor = Color3.fromRGB(255, 215, 0)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        hl.Parent = obj
+                        table.insert(eggHighlights, hl)
+                    end
+                end
+            end
+        else
+            for _, hl in ipairs(eggHighlights) do
+                if hl then hl:Destroy() end
+            end
+            eggHighlights = {}
+        end
+    end)
+
+    EggSpeedBtn.MouseButton1Click:Connect(function()
+        eggSpeedActive = not eggSpeedActive
+        EggSpeedBtn.Text = eggSpeedActive and "VELOCIDAD: 100" or "VELOCIDAD: 16"
+        EggSpeedBtn.BackgroundColor3 = eggSpeedActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        humanoid.WalkSpeed = eggSpeedActive and 100 or 16
+    end)
+
+    AutoSafeZoneBtn.MouseButton1Click:Connect(function()
+        autoSafeZoneActive = not autoSafeZoneActive
+        AutoSafeZoneBtn.Text = autoSafeZoneActive and "AUTO-TP ZONA: ON" or "AUTO-TP ZONA: OFF"
+        AutoSafeZoneBtn.BackgroundColor3 = autoSafeZoneActive and Color3.fromRGB(40, 180, 90) or Color3.fromRGB(180, 40, 40)
+        
+        -- Actualiza la zona segura actual en donde estés parado al encenderlo
+        if autoSafeZoneActive and humanoidRootPart then
+            safeZonePosition = humanoidRootPart.CFrame
+        end
+    end)
+
+    TpHuevosBtn.MouseButton1Click:Connect(function()
+        local closestEgg = nil
+        local minDist = math.huge
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                local part = obj:IsA("Model") and obj.PrimaryPart or (obj:IsA("BasePart") and obj or nil)
+                if part and humanoidRootPart then
+                    local dist = (humanoidRootPart.Position - part.Position).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        closestEgg = part
+                    end
+                end
+            end
+        end
+        if closestEgg and humanoidRootPart then
+            humanoidRootPart.CFrame = closestEgg.CFrame + Vector3.new(0, 3, 0)
+        end
+    end)
+
+    -- Detección automática al agarrar un huevo (Toque físico de inventario o modelo)
+    task.spawn(function()
+        while character and character.Parent do
+            task.wait(0.5)
+            if autoSafeZoneActive and humanoidRootPart then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if obj.Name:lower():find("egg") or obj.Name:lower():find("huevo") then
+                        local part = obj:IsA("Model") and obj.PrimaryPart or (obj:IsA("BasePart") and obj or nil)
+                        if part then
+                            local dist = (humanoidRootPart.Position - part.Position).Magnitude
+                            -- Si te acercas a menos de 4 studs del huevo (lo agarras/tocas), te teletransporta a la base
+                            if dist < 4 then
+                                humanoidRootPart.CFrame = safeZonePosition
+                                task.wait(1) -- Pausa para evitar bucles de teletransporte instantáneos
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Lógica MM2
     local mm2EspActive = false
     local mm2Highlights = {}
 
@@ -324,11 +434,11 @@ local function setupAdminPanel(character)
         if mm2EspActive then
             for _, p in ipairs(Players:GetPlayers()) do
                 if p ~= player and p.Character then
-                    local color = Color3.fromRGB(0, 255, 0) -- Inocente por defecto (Verde)
+                    local color = Color3.fromRGB(0, 255, 0)
                     if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                        color = Color3.fromRGB(255, 0, 0) -- Asesino (Rojo)
+                        color = Color3.fromRGB(255, 0, 0)
                     elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
-                        color = Color3.fromRGB(0, 120, 255) -- Sheriff (Azul)
+                        color = Color3.fromRGB(0, 120, 255)
                     end
 
                     local hl = Instance.new("Highlight")
@@ -348,7 +458,6 @@ local function setupAdminPanel(character)
         end
     end)
 
-    -- Lógica TP a la Pistola
     TpGunBtn.MouseButton1Click:Connect(function()
         local gunDrop = Workspace:FindFirstChild("GunDrop", true)
         if gunDrop and humanoidRootPart then
@@ -499,7 +608,7 @@ local function setupAdminPanel(character)
             
             if moveDir.Magnitude > 0 then
                 local lookVec = camera.CFrame.LookVector
-                local flatLook = Vector3.new(lookVec.X, 0, lookVec.Z)
+                local flatLook = Vector3.new(lookVec.X, 0, lookZip.Z or 0) -- safe flat vector
                 if flatLook.Magnitude > 0 then
                     humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, humanoidRootPart.Position + flatLook.Unit)
                 end
